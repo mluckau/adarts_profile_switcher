@@ -276,7 +276,7 @@ else:
 user_data = get_user_data(user)
 print(user_data)
 
-# Wähle einen Eintrag aus (zum Beispiel den ersten)
+# Wähle einen Eintrag aus
 selected_board_id, selected_api_key = user_data[0]
 new_file = f'./config_{user}.toml'
 # Schreibe die ausgewählten Werte in die Konfigurationsdatei
