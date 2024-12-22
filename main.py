@@ -248,6 +248,11 @@ def get_user_data(username):
 
 
 # Menüführung beim Programmstart
+print("""
+===========================================
+        AUTODARTS PROFILE SWITCHER
+===========================================
+""")
 print("1. Neuen Benutzer anlegen")
 print("2. Vorhandenen Benutzer auswählen")
 choice = input("Wähle eine Option (1 oder 2): ")
