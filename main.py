@@ -276,7 +276,7 @@ else:
     exit()
 
 user_data = get_user_data(user)
-print(user_data)
+# print(user_data)
 
 # Wähle einen Eintrag aus
 selected_board_id, selected_api_key = user_data[0]
