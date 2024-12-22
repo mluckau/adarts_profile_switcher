@@ -73,8 +73,8 @@ def download_file_via_ssh(hostname, port, username, password, remote_path, local
         sftp.close()
         ssh.close()
 
-        print(f"File downloaded successfully from {
-              remote_path} to {local_path}")
+        # print(f"File downloaded successfully from {
+        #      remote_path} to {local_path}")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -96,7 +96,7 @@ def upload_file_via_ssh(hostname, port, username, password, local_path, remote_p
         sftp.close()
         ssh.close()
 
-        print(f"File uploaded successfully from {local_path} to {remote_path}")
+        # print(f"File uploaded successfully from {local_path} to {remote_path}")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -155,7 +155,7 @@ def update_toml_file(file_path, section, updates, new_file):
         with open(new_file, 'w') as file:
             file.write(content)
 
-        print(f"Parameters in section '{section}' updated in {new_file}")
+        # print(f"Parameters in section '{section}' updated in {new_file}")
     except Exception as e:
         print(f"An error occurred: {e}")
 
