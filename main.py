@@ -194,12 +194,14 @@ cipher_suite = Fernet(key)
 config_file = './config/config.toml'
 
 if not os.path.exists(config_file):
-    hostname = input("Enter SSH hostname: ")
-    port = int(input("Enter SSH port: "))
-    username = input("Enter SSH username: ")
-    remote_path = input("Enter remote file path: ")
-    local_path = input("Enter local file path: ")
-    password = input("Enter SSH password: ")
+    hostname = input("SSH Host: ")
+    port = int(input("SSH Port [22]: "))
+    port = int(port) if port else 22
+    username = input("SSH Benutzer: ")
+    remote_path = input("Entfernte Config: ")
+    local_path = input("Lokale Config [./config_org.toml]: ")
+    local_path = local_path if local_path else './config_org.toml'
+    password = input("SSH Passwort: ")
 
     # Encrypt the password
     encrypted_password = encrypt_password(password, key)
