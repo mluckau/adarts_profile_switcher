@@ -247,30 +247,44 @@ if not os.path.exists(config_file):
     if browser_path:
         print(f"Die Datei 'darts-browser.py' wurde gefunden: {browser_path}")
         browser_path = input(
-            "Pfad zur Datei 'darts-browser.py' (drücke Enter, um den gefundenen Pfad zu verwenden): ") or browser_path
+            f"Autodarts-Browser wurde gefunden (drücke Enter, {browser_path} zu verwenden): ") or browser_path
     else:
-        print("Die Datei 'darts-browser.py' wurde nicht gefunden. Überspringe Browser-Konfiguration.")
-
-    # Create the config dictionary
-    config = {
-        'ssh': {
-            'hostname': hostname,
-            'port': port,
-            'username': username,
-            'password': encrypted_password,
-            'remote_path': remote_path,
-            'local_path': local_path
-        }
-    }
+        print("Autodarts-Browser wurde nicht gefunden.")
+        manual_config = input(
+            "Möchten Sie die Browser-Konfiguration manuell eingeben? (ja/nein): ").strip().lower()
+        if manual_config == 'ja' | 'yes' | 'y' | 'j':
+            browser_path = input("Pfad zum Autodarts-Browser: ")
+        else:
+            print("Überspringe Browser-Konfiguration.")
+            browser_path = None
 
     # Füge Browser-Konfiguration hinzu, falls vorhanden
     if browser_path:
         config = {
             'browser': {
-                'path': browser_path
+                'path': browser_path,
+                'local_browser_config': './config_browser_org.ini'
+            },
+            'ssh': {
+                'hostname': hostname,
+                'port': port,
+                'username': username,
+                'password': encrypted_password,
+                'remote_path': remote_path,
+                'local_path': local_path
             }
         }
-
+    else:
+        config = {
+            'ssh': {
+                'hostname': hostname,
+                'port': port,
+                'username': username,
+                'password': encrypted_password,
+                'remote_path': remote_path,
+                'local_path': local_path
+            }
+        }
     # Write the config to the TOML file
     with open(config_file, 'w') as file:
         toml.dump(config, file)
@@ -300,6 +314,12 @@ local_path = str(config['ssh']['local_path'])
 # Decrypt the password
 encrypted_password_from_config = config['ssh']['password']
 password = decrypt_password(encrypted_password_from_config, key)
+
+browser_installed = False
+if 'browser' in config:
+    browser_path = str(config['browser']['path'])
+    local_browser_config = str(config['browser']['local_browser_config'])
+    browser_installed = True
 
 
 def get_user_data(username):
@@ -366,6 +386,7 @@ updates = {
     'api_key': selected_api_key
 }
 
+
 download_file_via_ssh(hostname, port, username,
                       password, remote_path, local_path)
 update_toml_file('config_org.toml', 'auth', updates, new_file)
@@ -375,3 +396,7 @@ upload_file_via_ssh(hostname, port, username, password, new_file, remote_path)
 # Neustarten von autodarts
 service_name = 'autodarts'
 restart_service_via_ssh(hostname, port, username, password, service_name)
+
+if browser_installed:
+    download_file_via_ssh(hostname, port, username,
+                          password, browser_path, local_browser_config)
