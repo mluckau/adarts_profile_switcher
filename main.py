@@ -281,6 +281,7 @@ while True:
     show_menu()
     print("1. Neuen Benutzer anlegen")
     print("2. Vorhandenen Benutzer auswählen")
+    print("")
     choice = input("Wähle eine Option (1 oder 2): ")
 
     if choice == '1':
@@ -304,8 +305,10 @@ while True:
             insert_user_data(user, board_id, api_key)
         else:
             print("Vorhandene Benutzer:")
+            print("===================")
             for i, user in enumerate(users, start=1):
                 print(f"{i}. {user}")
+            print("")
             user_choice = int(input("Wähle einen Benutzer (Nummer): "))
             user = users[user_choice - 1]
         break
