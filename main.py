@@ -4,6 +4,11 @@ import os
 from cryptography.fernet import Fernet
 import sqlite3
 
+directory = './config'
+if not os.path.exists(directory):
+    os.makedirs(directory)
+    print(f"Directory '{directory}' created.")
+
 conn = sqlite3.connect('./config/user_data.db')
 cursor = conn.cursor()
 
@@ -38,9 +43,9 @@ def insert_user_data(username, board_id, api_key):
         VALUES (?, ?, ?)
         ''', (username, board_id, api_key))
         conn.commit()
-        print(f"User '{username}' added to the database.")
+        print(f"Benutzer '{username}' zur Datenbank hinzugefügt.")
     else:
-        print(f"User '{username}' already exists in the database.")
+        print(f"Benutzer '{username}' existiert bereits in der Datenbank.")
 
     conn.close()
 
@@ -186,13 +191,8 @@ def show_menu():
 """)
 
 
-directory = './config'
-if not os.path.exists(directory):
-    os.makedirs(directory)
-    print(f"Directory '{directory}' created.")
 # else:
     # print(f"Directory '{directory}' already exists.")
-
 if not os.path.exists('./config/key.key'):
     key = Fernet.generate_key()
     with open('./config/key.key', 'wb') as file:
@@ -212,7 +212,7 @@ if not os.path.exists(config_file):
     print("Konfigurationsdatei nicht gefunden. Bitte gebe die erforderlichen Informationen ein.")
     print("")
     hostname = input("SSH Host: ")
-    port = int(input("SSH Port [22]: "))
+    port = input("SSH Port [22]: ")
     port = int(port) if port else 22
     username = input("SSH Benutzer: ")
     password = input("SSH Passwort: ")
