@@ -180,6 +180,19 @@ def update_toml_file(file_path, section, updates, new_file):
         print(f"An error occurred: {e}")
 
 
+def update_ini_file(file_path, section, option, new_value, new_config_file):
+    config = configparser.ConfigParser()
+    config.read(file_path)
+
+    if section not in config:
+        config.add_section(section)
+
+    config[section][option] = new_value
+
+    with open(new_config_file, 'w') as configfile:
+        config.write(configfile)
+
+
 def encrypt_password(password, key):
     cipher_suite = Fernet(key)
     encrypted_password = cipher_suite.encrypt(password.encode()).decode()
@@ -232,6 +245,8 @@ if not os.path.exists(config_file):
     remote_path = input("Entfernte Config: ")
     local_path = input("Lokale Config [./config_org.toml]: ")
     local_path = local_path if local_path else './config_org.toml'
+    aktueller_benutzer = input(
+        "Unter welchem Namen soll der aktuelle Benutzer in der DB abgelegt werden?: ")
 
     # Encrypt the password
     encrypted_password = encrypt_password(password, key)
@@ -299,7 +314,7 @@ if not os.path.exists(config_file):
     # Extrahiere board_id und api_key und füge sie in die Datenbank ein
     board_id = downloaded_config['auth']['board_id']
     api_key = downloaded_config['auth']['api_key']
-    insert_user_data(username, board_id, api_key)
+    insert_user_data(aktueller_benutzer, board_id, api_key)
 
 else:
     with open(config_file, 'r') as file:
@@ -398,5 +413,19 @@ service_name = 'autodarts'
 restart_service_via_ssh(hostname, port, username, password, service_name)
 
 if browser_installed:
+    browser_choice = input("Browser oben oder unten? (1/2)[1]: ")
+    if browser_choice == '1':
+        browser = "board1_id"
+    elif browser_choice == '2':
+        browser = "board2_id"
+    else:
+        browser = "board1_id"
+    new_browser_config = f'./config_browser_{user}.ini'
     download_file_via_ssh(hostname, port, username,
                           password, browser_path, local_browser_config)
+    # Ändere den Wert 'board1' in der INI-Datei
+    update_ini_file(local_browser_config, 'boards', browser,
+                    updates['board_id'], new_browser_config)
+    # Lade die aktualisierte INI-Datei wieder hoch
+    upload_file_via_ssh(hostname, port, username, password,
+                        new_browser_config, browser_path)
