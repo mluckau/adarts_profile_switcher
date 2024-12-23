@@ -413,7 +413,7 @@ service_name = 'autodarts'
 restart_service_via_ssh(hostname, port, username, password, service_name)
 
 if browser_installed:
-    browser_choice = input("Browser oben oder unten? (1/2)[1]: ")
+    browser_choice = input("Browserfenster oben oder unten? (1/2)[1]: ")
     if browser_choice == '1':
         browser = "board1_id"
     elif browser_choice == '2':
