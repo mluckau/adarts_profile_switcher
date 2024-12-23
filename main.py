@@ -134,9 +134,12 @@ def restart_service_via_ssh(hostname, port, username, password, service_name):
         print(f"An error occurred: {e}")
 
 
-def find_remote_file(ssh, filename, search_path):
+def find_remote_file(ssh, filename, search_path, exclude_dirs=None):
     try:
-        command = f'find {search_path} -name {filename}'
+        exclude_dirs = exclude_dirs or []
+        exclude_cmd = ' '.join(
+            [f"-path {os.path.join(search_path, d)} -prune -o" for d in exclude_dirs])
+        command = f'find {search_path} {exclude_cmd} -name {filename} -print'
         stdin, stdout, stderr = ssh.exec_command(command)
         result = stdout.read().decode().strip()
         if result:
@@ -242,7 +245,9 @@ if not os.path.exists(config_file):
     port = int(port) if port else 22
     username = input("SSH Benutzer: ")
     password = input("SSH Passwort: ")
-    remote_path = input("Entfernte Config: ")
+    autodarts_config = f'/home/{username}/.config/autodarts/config.toml'
+    remote_path = input(
+        f"Entfernte Autodarts-Config: [{autodarts_config}] ") or autodarts_config
     local_path = input("Lokale Config [./config_org.toml]: ")
     local_path = local_path if local_path else './config_org.toml'
     aktueller_benutzer = input(
@@ -257,12 +262,15 @@ if not os.path.exists(config_file):
     ssh.connect(hostname, port, username, password)
 
     # Überprüfe, ob die Datei "darts-browser.py" irgendwo im Home-Verzeichnis des SSH-Benutzers vorhanden ist
+    exclude_dirs = ['.cache', '.config', '.local']
     browser_path = find_remote_file(
-        ssh, 'darts-browser.py', '/home/' + username)
+        ssh, 'darts-browser.py', '/home/' + username, exclude_dirs)
     if browser_path:
-        print(f"Die Datei 'darts-browser.py' wurde gefunden: {browser_path}")
-        browser_path = input(
-            f"Autodarts-Browser wurde gefunden (drücke Enter, {browser_path} zu verwenden): ") or browser_path
+        browser_dir = os.path.dirname(browser_path)
+        browser_config = browser_dir + '/config.ini'
+        print(f"Der Autodarts-Browser wurde in {browser_dir} gefunden: ")
+        browser_config = input(
+            f"Drücke Enter um, [{browser_config}] zu verwenden: ") or browser_config
     else:
         print("Autodarts-Browser wurde nicht gefunden.")
         manual_config = input(
@@ -277,7 +285,7 @@ if not os.path.exists(config_file):
     if browser_path:
         config = {
             'browser': {
-                'path': browser_path,
+                'path': browser_config,
                 'local_browser_config': './config_browser_org.ini'
             },
             'ssh': {
@@ -423,7 +431,7 @@ if browser_installed:
     new_browser_config = f'./config_browser_{user}.ini'
     download_file_via_ssh(hostname, port, username,
                           password, browser_path, local_browser_config)
-    # Ändere den Wert 'board1' in der INI-Datei
+    # Ändere den Wert in der INI-Datei
     update_ini_file(local_browser_config, 'boards', browser,
                     updates['board_id'], new_browser_config)
     # Lade die aktualisierte INI-Datei wieder hoch
