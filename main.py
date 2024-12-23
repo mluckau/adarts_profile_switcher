@@ -134,6 +134,20 @@ def restart_service_via_ssh(hostname, port, username, password, service_name):
         print(f"An error occurred: {e}")
 
 
+def find_remote_file(ssh, filename, search_path):
+    try:
+        command = f'find {search_path} -name {filename}'
+        stdin, stdout, stderr = ssh.exec_command(command)
+        result = stdout.read().decode().strip()
+        if result:
+            return result
+        else:
+            return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
 def update_toml_file(file_path, section, updates, new_file):
     try:
         # Lade die bestehende TOML-Datei
@@ -222,6 +236,21 @@ if not os.path.exists(config_file):
     # Encrypt the password
     encrypted_password = encrypt_password(password, key)
 
+    # Create an SSH client to check for the remote file
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(hostname, port, username, password)
+
+    # Überprüfe, ob die Datei "darts-browser.py" irgendwo im Home-Verzeichnis des SSH-Benutzers vorhanden ist
+    browser_path = find_remote_file(
+        ssh, 'darts-browser.py', '/home/' + username)
+    if browser_path:
+        print(f"Die Datei 'darts-browser.py' wurde gefunden: {browser_path}")
+        browser_path = input(
+            "Pfad zur Datei 'darts-browser.py' (drücke Enter, um den gefundenen Pfad zu verwenden): ") or browser_path
+    else:
+        print("Die Datei 'darts-browser.py' wurde nicht gefunden. Überspringe Browser-Konfiguration.")
+
     # Create the config dictionary
     config = {
         'ssh': {
@@ -233,6 +262,14 @@ if not os.path.exists(config_file):
             'local_path': local_path
         }
     }
+
+    # Füge Browser-Konfiguration hinzu, falls vorhanden
+    if browser_path:
+        config = {
+            'browser': {
+                'path': browser_path
+            }
+        }
 
     # Write the config to the TOML file
     with open(config_file, 'w') as file:
