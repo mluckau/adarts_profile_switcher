@@ -191,8 +191,6 @@ def show_menu():
 """)
 
 
-# else:
-    # print(f"Directory '{directory}' already exists.")
 if not os.path.exists('./config/key.key'):
     key = Fernet.generate_key()
     with open('./config/key.key', 'wb') as file:
