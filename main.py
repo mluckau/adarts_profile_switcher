@@ -173,6 +173,19 @@ def decrypt_password(encrypted_password, key):
     return decrypted_password
 
 
+def clear_screen():
+    os.system('clear')
+
+
+def show_menu():
+    clear_screen()
+    print("""
+===========================================
+        AUTODARTS PROFILE SWITCHER
+===========================================
+""")
+
+
 directory = './config'
 if not os.path.exists(directory):
     os.makedirs(directory)
@@ -194,14 +207,18 @@ cipher_suite = Fernet(key)
 config_file = './config/config.toml'
 
 if not os.path.exists(config_file):
+    clear_screen()
+    show_menu()
+    print("Konfigurationsdatei nicht gefunden. Bitte gebe die erforderlichen Informationen ein.")
+    print("")
     hostname = input("SSH Host: ")
     port = int(input("SSH Port [22]: "))
     port = int(port) if port else 22
     username = input("SSH Benutzer: ")
+    password = input("SSH Passwort: ")
     remote_path = input("Entfernte Config: ")
     local_path = input("Lokale Config [./config_org.toml]: ")
     local_path = local_path if local_path else './config_org.toml'
-    password = input("SSH Passwort: ")
 
     # Encrypt the password
     encrypted_password = encrypt_password(password, key)
@@ -221,6 +238,19 @@ if not os.path.exists(config_file):
     # Write the config to the TOML file
     with open(config_file, 'w') as file:
         toml.dump(config, file)
+
+    download_file_via_ssh(hostname, port, username,
+                          password, remote_path, local_path)
+
+    # Lese die heruntergeladene Konfigurationsdatei
+    with open(local_path, 'r') as file:
+        downloaded_config = toml.load(file)
+
+    # Extrahiere board_id und api_key und füge sie in die Datenbank ein
+    board_id = downloaded_config['auth']['board_id']
+    api_key = downloaded_config['auth']['api_key']
+    insert_user_data(username, board_id, api_key)
+
 else:
     with open(config_file, 'r') as file:
         config = toml.load(file)
@@ -248,37 +278,42 @@ def get_user_data(username):
 
 
 # Menüführung beim Programmstart
-print("""
-===========================================
-        AUTODARTS PROFILE SWITCHER
-===========================================
-""")
-print("1. Neuen Benutzer anlegen")
-print("2. Vorhandenen Benutzer auswählen")
-choice = input("Wähle eine Option (1 oder 2): ")
+while True:
+    clear_screen()
+    show_menu()
+    print("1. Neuen Benutzer anlegen")
+    print("2. Vorhandenen Benutzer auswählen")
+    choice = input("Wähle eine Option (1 oder 2): ")
 
-if choice == '1':
-    user = input("Benutzer: ")
-    board_id = input("Board ID: ")
-    api_key = input("API key: ")
-    insert_user_data(user, board_id, api_key)
-elif choice == '2':
-    users = list_users()
-    if not users:
-        print("Keine Benutzer in der Datenbank vorhanden. Bitte legen Sie einen neuen Benutzer an.")
+    if choice == '1':
+        clear_screen()
+        show_menu()
         user = input("Benutzer: ")
         board_id = input("Board ID: ")
         api_key = input("API key: ")
         insert_user_data(user, board_id, api_key)
+        break
+    elif choice == '2':
+        clear_screen()
+        show_menu()
+        users = list_users()
+        if not users:
+            print(
+                "Keine Benutzer in der Datenbank vorhanden. Bitte legen Sie einen neuen Benutzer an.")
+            user = input("Benutzer: ")
+            board_id = input("Board ID: ")
+            api_key = input("API key: ")
+            insert_user_data(user, board_id, api_key)
+        else:
+            print("Vorhandene Benutzer:")
+            for i, user in enumerate(users, start=1):
+                print(f"{i}. {user}")
+            user_choice = int(input("Wähle einen Benutzer (Nummer): "))
+            user = users[user_choice - 1]
+        break
     else:
-        print("Vorhandene Benutzer:")
-        for i, user in enumerate(users, start=1):
-            print(f"{i}. {user}")
-        user_choice = int(input("Wähle einen Benutzer (Nummer): "))
-        user = users[user_choice - 1]
-else:
-    print("Ungültige Option. Programm wird beendet.")
-    exit()
+        print("Ungültige Option. Bitte versuchen Sie es erneut.")
+        input("Drücken Sie die Eingabetaste, um fortzufahren...")
 
 user_data = get_user_data(user)
 # print(user_data)
