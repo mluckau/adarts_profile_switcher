@@ -1,5 +1,6 @@
 bcrypt==4.2.1
 cffi==1.17.1
+configparser==7.1.0
 cryptography==44.0.0
 paramiko==3.5.0
 pycparser==2.22
