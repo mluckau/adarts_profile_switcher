@@ -538,6 +538,12 @@ if browser_installed:
     else:
         browser = "board1_id"
     new_browser_config = f'./config_browser_{user}.ini'
+    if not same_host:
+        hostname = str(config['browser']['ssh']['hostname'])
+        port = int(config['browser']['ssh']['port'])
+        username = str(config['browser']['ssh']['username'])
+        password = str(decrypt_password(
+            config['browser']['ssh']['password'], key))
     download_file_via_ssh(hostname, port, username,
                           password, browser_path, local_browser_config)
     # Ändere den Wert in der INI-Datei
