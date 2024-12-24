@@ -4,6 +4,7 @@ import os
 from cryptography.fernet import Fernet
 import sqlite3
 import configparser
+import getpass
 
 directory = './config'
 if not os.path.exists(directory):
@@ -215,8 +216,9 @@ def clear_screen():
 
 def show_menu():
     clear_screen()
-    print("""
+    print(f"""
 ===========================================
+              [{board_name}]
         AUTODARTS PROFILE SWITCHER
 ===========================================
 """)
@@ -236,15 +238,17 @@ cipher_suite = Fernet(key)
 config_file = './config/config.toml'
 
 if not os.path.exists(config_file):
+    board_name = ""
     clear_screen()
     show_menu()
     print("Konfigurationsdatei nicht gefunden. Bitte gebe die erforderlichen Informationen ein.")
     print("")
+    board_name = input("Name des Boards: ")
     hostname = input("SSH Host: ")
     port = input("SSH Port [22]: ")
     port = int(port) if port else 22
     username = input("SSH Benutzer: ")
-    password = input("SSH Passwort: ")
+    password = getpass.getpass("SSH Passwort: ")
     autodarts_config = f'/home/{username}/.config/autodarts/config.toml'
     remote_path = input(
         f"Entfernte Autodarts-Config: [{autodarts_config}] ") or autodarts_config
@@ -261,29 +265,47 @@ if not os.path.exists(config_file):
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(hostname, port, username, password)
 
-    # Überprüfe, ob die Datei "darts-browser.py" irgendwo im Home-Verzeichnis des SSH-Benutzers vorhanden ist
-    exclude_dirs = ['.cache', '.config', '.local']
-    browser_path = find_remote_file(
-        ssh, 'darts-browser.py', '/home/' + username, exclude_dirs)
-    if browser_path:
-        browser_dir = os.path.dirname(browser_path)
-        browser_config = browser_dir + '/config.ini'
-        print(f"Der Autodarts-Browser wurde in {browser_dir} gefunden: ")
-        browser_config = input(
-            f"Drücke Enter um, [{browser_config}] zu verwenden: ") or browser_config
+    clear_screen()
+    show_menu()
+    print("Soll der Autodarts-Browser konfiguriert werden?")
+    print("")
+    choice = input("Ja/Nein [Ja]: ")
+    choice = choice.strip().lower()
+    if choice == 'nein' or choice == 'no' or choice == 'n' or choice == 'j':
+        browser_path = None
     else:
-        print("Autodarts-Browser wurde nicht gefunden.")
-        manual_config = input(
-            "Möchten Sie die Browser-Konfiguration manuell eingeben? (ja/nein): ").strip().lower()
-        if manual_config == 'ja' | 'yes' | 'y' | 'j':
-            browser_path = input("Pfad zum Autodarts-Browser: ")
+        # Überprüfe, ob die Datei "darts-browser.py" irgendwo im Home-Verzeichnis des SSH-Benutzers vorhanden ist
+        exclude_dirs = ['.cache', '.config', '.local']
+        browser_path = find_remote_file(
+            ssh, 'darts-browser.py', '/home/' + username, exclude_dirs)
+        if browser_path:
+            browser_dir = os.path.dirname(browser_path)
+            browser_config = browser_dir + '/config.ini'
+            clear_screen()
+            show_menu()
+            print(f"Der Autodarts-Browser wurde in {browser_dir} gefunden: ")
+            print("")
+            browser_config = input(
+                f"Drücke Enter um, [{browser_config}] zu verwenden: ") or browser_config
         else:
-            print("Überspringe Browser-Konfiguration.")
-            browser_path = None
+            clear_screen()
+            show_menu()
+            print("Autodarts-Browser wurde nicht gefunden.")
+            print("")
+            manual_config = input(
+                "Möchten Sie die Browser-Konfiguration manuell eingeben? (ja/nein): ").strip().lower()
+            if manual_config == 'ja' or manual_config == 'yes' or manual_config == 'y' or manual_config == 'j':
+                browser_path = input("Pfad zum Autodarts-Browser: ")
+            else:
+                print("Überspringe Browser-Konfiguration.")
+                browser_path = None
 
     # Füge Browser-Konfiguration hinzu, falls vorhanden
     if browser_path:
         config = {
+            'general': {
+                'board_name': board_name
+            },
             'browser': {
                 'path': browser_config,
                 'local_browser_config': './config_browser_org.ini'
@@ -299,6 +321,9 @@ if not os.path.exists(config_file):
         }
     else:
         config = {
+            'general': {
+                'board_name': board_name
+            },
             'ssh': {
                 'hostname': hostname,
                 'port': port,
@@ -328,6 +353,7 @@ else:
     with open(config_file, 'r') as file:
         config = toml.load(file)
 
+board_name = str(config['general']['board_name'])
 hostname = str(config['ssh']['hostname'])
 port = int(config['ssh']['port'])
 username = str(config['ssh']['username'])
