@@ -260,65 +260,120 @@ if not os.path.exists(config_file):
     # Encrypt the password
     encrypted_password = encrypt_password(password, key)
 
-    # Create an SSH client to check for the remote file
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname, port, username, password)
-
     clear_screen()
     show_menu()
     print("Soll der Autodarts-Browser konfiguriert werden?")
     print("")
-    choice = input("Ja/Nein [Ja]: ")
+    choice = input("Ja/Nein [Ja]: ") or 'ja'
     choice = choice.strip().lower()
     if choice == 'nein' or choice == 'no' or choice == 'n' or choice == 'j':
         browser_path = None
     else:
-        # Überprüfe, ob die Datei "darts-browser.py" irgendwo im Home-Verzeichnis des SSH-Benutzers vorhanden ist
+        clear_screen()
+        show_menu()
+        print("Befindet sich der Autodarts-Browser auf dem selben Host?")
+        print("")
+        choice = input("Ja/Nein [Ja]: ") or 'ja'
+        choice = choice.strip().lower()
+        same_host = True
         exclude_dirs = ['.cache', '.config', '.local']
-        browser_path = find_remote_file(
-            ssh, 'darts-browser.py', '/home/' + username, exclude_dirs)
-        if browser_path:
-            browser_dir = os.path.dirname(browser_path)
-            browser_config = browser_dir + '/config.ini'
-            clear_screen()
-            show_menu()
-            print(f"Der Autodarts-Browser wurde in {browser_dir} gefunden: ")
-            print("")
-            browser_config = input(
-                f"Drücke Enter um, [{browser_config}] zu verwenden: ") or browser_config
-        else:
-            clear_screen()
-            show_menu()
-            print("Autodarts-Browser wurde nicht gefunden.")
-            print("")
-            manual_config = input(
-                "Möchten Sie die Browser-Konfiguration manuell eingeben? (ja/nein): ").strip().lower()
-            if manual_config == 'ja' or manual_config == 'yes' or manual_config == 'y' or manual_config == 'j':
-                browser_path = input("Pfad zum Autodarts-Browser: ")
+        if choice == 'ja' or choice == 'yes' or choice == 'y' or choice == 'j':
+            # Create an SSH client to check for the remote file
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname, port, username, password)
+            # Überprüfe, ob die Datei "darts-browser.py" irgendwo im Home-Verzeichnis des SSH-Benutzers vorhanden ist
+
+            browser_path = find_remote_file(
+                ssh, 'darts-browser.py', '/home/' + username, exclude_dirs)
+            if browser_path:
+                browser_dir = os.path.dirname(browser_path)
+                browser_config = browser_dir + '/config.ini'
+                clear_screen()
+                show_menu()
+                print(
+                    f"Der Autodarts-Browser wurde in {browser_dir} gefunden: ")
+                print("")
+                browser_config = input(
+                    f"Drücke Enter um, [{browser_config}] zu verwenden: ") or browser_config
+                same_host = True
             else:
-                print("Überspringe Browser-Konfiguration.")
-                browser_path = None
+                clear_screen()
+                show_menu()
+                print("Autodarts-Browser wurde nicht gefunden.")
+                print("")
+                manual_config = input(
+                    "Möchten Sie die Browser-Konfiguration manuell eingeben? (ja/nein): ").strip().lower()
+                if manual_config == 'ja' or manual_config == 'yes' or manual_config == 'y' or manual_config == 'j':
+                    browser_path = input("Pfad zum Autodarts-Browser: ")
+                    same_host = True
+                else:
+                    print("Überspringe Browser-Konfiguration.")
+                    browser_path = None
+        else:
+            browser_hostname = input("SSH Host für Browser: ")
+            browser_port = input("SSH Port [22]: ") or '22'
+            browser_username = input("SSH Benutzer für Browser: ")
+            browser_password = getpass.getpass("SSH Passwort für Browser: ")
+            encrypted_browser_password = encrypt_password(
+                browser_password, key)
+            browser_ssh = paramiko.SSHClient()
+            browser_ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            browser_ssh.connect(browser_hostname, int(port),
+                                browser_username, browser_password)
+            browser_path = find_remote_file(
+                browser_ssh, 'darts-browser.py', '/home/' + browser_username, exclude_dirs)
+            same_host = False
+            print("Noch nicht implementiert.")
+            browser_path = None
 
     # Füge Browser-Konfiguration hinzu, falls vorhanden
     if browser_path:
-        config = {
-            'general': {
-                'board_name': board_name
-            },
-            'browser': {
-                'path': browser_config,
-                'local_browser_config': './config_browser_org.ini'
-            },
-            'ssh': {
-                'hostname': hostname,
-                'port': port,
-                'username': username,
-                'password': encrypted_password,
-                'remote_path': remote_path,
-                'local_path': local_path
+        if same_host:
+            config = {
+                'general': {
+                    'board_name': board_name
+                },
+                'browser': {
+                    'same_host': same_host,
+                    'path': browser_config,
+                    'local_browser_config': './config_browser_org.ini'
+                },
+                'ssh': {
+                    'hostname': hostname,
+                    'port': port,
+                    'username': username,
+                    'password': encrypted_password,
+                    'remote_path': remote_path,
+                    'local_path': local_path
+                }
             }
-        }
+        else:
+
+            config = {
+                'general': {
+                    'board_name': board_name
+                },
+                'browser': {
+                    'same_host': same_host,
+                    'ssh': {
+                        'hostname': browser_hostname,
+                        'port': browser_port,
+                        'username': browser_username,
+                        'password': encrypted_browser_password
+                    },
+                    'path': browser_config,
+                    'local_browser_config': './config_browser_org.ini'
+                },
+                'ssh': {
+                    'hostname': hostname,
+                    'port': port,
+                    'username': username,
+                    'password': encrypted_password,
+                    'remote_path': remote_path,
+                    'local_path': local_path
+                }
+            }
     else:
         config = {
             'general': {
