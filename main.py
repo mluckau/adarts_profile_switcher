@@ -323,9 +323,33 @@ if not os.path.exists(config_file):
                                 browser_username, browser_password)
             browser_path = find_remote_file(
                 browser_ssh, 'darts-browser.py', '/home/' + browser_username, exclude_dirs)
+            if browser_path:
+                ssh_browser_dir = os.path.dirname(browser_path)
+                ssh_browser_config = ssh_browser_dir + '/config.ini'
+                clear_screen()
+                show_menu()
+                print(
+                    f"Der Autodarts-Browser wurde in {ssh_browser_dir} gefunden: ")
+                print("")
+                browser_config = input(
+                    f"Drücke Enter um, [{ssh_browser_config}] zu verwenden: ") or ssh_browser_config
+                same_host = True
+            else:
+                clear_screen()
+                show_menu()
+                print("Autodarts-Browser wurde nicht gefunden.")
+                print("")
+                manual_config = input(
+                    "Möchten Sie die Browser-Konfiguration manuell eingeben? (ja/nein): ").strip().lower()
+                if manual_config == 'ja' or manual_config == 'yes' or manual_config == 'y' or manual_config == 'j':
+                    browser_path = input("Pfad zum Autodarts-Browser: ")
+                    same_host = True
+                else:
+                    print("Überspringe Browser-Konfiguration.")
+                    browser_path = None
             same_host = False
             print("Noch nicht implementiert.")
-            browser_path = None
+            # browser_path = None
 
     # Füge Browser-Konfiguration hinzu, falls vorhanden
     if browser_path:
