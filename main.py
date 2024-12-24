@@ -311,6 +311,10 @@ if not os.path.exists(config_file):
                     print("Überspringe Browser-Konfiguration.")
                     browser_path = None
         else:
+            clear_screen()
+            show_menu()
+            print("Autodarts-Browser SSH Verbindungsdaten")
+            print("")
             browser_hostname = input("SSH Host für Browser: ")
             browser_port = input("SSH Port [22]: ") or '22'
             browser_username = input("SSH Benutzer für Browser: ")
@@ -333,7 +337,7 @@ if not os.path.exists(config_file):
                 print("")
                 browser_config = input(
                     f"Drücke Enter um, [{ssh_browser_config}] zu verwenden: ") or ssh_browser_config
-                same_host = True
+                same_host = False
             else:
                 clear_screen()
                 show_menu()
@@ -343,7 +347,7 @@ if not os.path.exists(config_file):
                     "Möchten Sie die Browser-Konfiguration manuell eingeben? (ja/nein): ").strip().lower()
                 if manual_config == 'ja' or manual_config == 'yes' or manual_config == 'y' or manual_config == 'j':
                     browser_path = input("Pfad zum Autodarts-Browser: ")
-                    same_host = True
+                    same_host = False
                 else:
                     print("Überspringe Browser-Konfiguration.")
                     browser_path = None
