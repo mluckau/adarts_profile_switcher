@@ -316,7 +316,7 @@ if not os.path.exists(config_file):
             print("Autodarts-Browser SSH Verbindungsdaten")
             print("")
             browser_hostname = input("SSH Host für Browser: ")
-            browser_port = input("SSH Port [22]: ") or '22'
+            browser_port = input("SSH Port [22]: ") or 22
             browser_username = input("SSH Benutzer für Browser: ")
             browser_password = getpass.getpass("SSH Passwort für Browser: ")
             encrypted_browser_password = encrypt_password(
@@ -377,7 +377,6 @@ if not os.path.exists(config_file):
                 }
             }
         else:
-
             config = {
                 'general': {
                     'board_name': board_name
@@ -531,6 +530,10 @@ restart_service_via_ssh(hostname, port, username, password, service_name)
 
 if browser_installed:
     same_host = config['browser']['same_host']
+    clear_screen()
+    show_menu()
+    print("In welchem Browserfenster soll das Board geöffnet werden?")
+    print("")
     browser_choice = input("Browserfenster oben oder unten? (1/2)[1]: ")
     if browser_choice == '1':
         browser = "board1_id"
